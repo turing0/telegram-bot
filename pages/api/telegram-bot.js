@@ -1,4 +1,3 @@
-import { NextApiRequest, NextApiResponse } from 'next'
 import { Telegram } from 'telegram-bot-api';
 
 const myChatId = '5525041552'
