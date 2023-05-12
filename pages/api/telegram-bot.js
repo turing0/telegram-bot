@@ -3,10 +3,10 @@ import { Telegram } from 'telegram-bot-api';
 import TelegramBot from 'telegram-bot-api'
 
 const myChatId = '5525041552'
-const token = '5635808285:AAGP1SilFciikrQd_SMr68J70OlVVJKiVsk'
+const token = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk'
 
 export default async (req, res) => {
-    const tgbot = '5635808285:AAGP1SilFciikrQd_SMr68J70OlVVJKiVsk';
+    const tgbot = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk';
   
     if (req.body.message.text === '/start') {
       const message =
