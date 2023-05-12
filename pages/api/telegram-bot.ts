@@ -1,54 +1,24 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import TelegramBot from 'telegram-bot-api'
+import { TelegramBot } from 'node-telegram-bot-api';
 
 const myChatId = '5525041552'
 const token = '5635808285:AAGP1SilFciikrQd_SMr68J70OlVVJKiVsk'
+const bot = new TelegramBot(token, { polling: true });
 
-const bot = new TelegramBot({
-  token: token,
-})
+bot.onText(/\/start/, (msg) => {
+    const chatId = msg.chat.id;
+    bot.sendMessage(chatId, '你好！请向我发送消息~');
+});
 
-bot.on('message', (message) => {
-  const forwardedMessage = `Message from user ${message.chat.id}: ${message.text}\n@${message.from.username}`
-  bot.sendMessage({
-    chat_id: myChatId,
-    text: forwardedMessage,
-  })
-})
+bot.on('message', (msg) => {
+    const chatId = msg.chat.id;
+    const username = msg.from.username;
+    const forwardedMessage = `Message from user ${chatId}: ${msg.text}\n@${username}`;
 
-bot.on('callback_query', (callbackQuery) => {
-  const userMessage = callbackQuery.data
-  const chatId = callbackQuery.message.chat.id
-  const messageId = callbackQuery.message.message_id
+    bot.sendMessage(chatId, '您的反馈已记录！我们将尽快回复您！');
+    bot.sendMessage(myChatId, forwardedMessage);
+});
 
-  if (callbackQuery.message.reply_to_message?.text.startsWith('Message from user')) {
-    const userId = callbackQuery.message.reply_to_message.text.split(':')[0].split('user ')[1]
-    bot.sendMessage({
-      chat_id: userId,
-      text: userMessage,
-    })
-  } else {
-    const forwardedMessage = `Message from user ${chatId}: ${userMessage}\n@${callbackQuery.from.username}`
-    bot.sendMessage({
-      chat_id: myChatId,
-      text: forwardedMessage,
-    })
-    bot.sendMessage({
-      chat_id: chatId,
-      text: '回复成功！',
-      reply_to_message_id: messageId,
-    })
-  }
-})
-
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  try {
-    await bot.processUpdate(req.body)
-    res.status(200).json({ message: 'success' })
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: 'error' })
-  }
-}
-
-export default handler
+export default (req, res) => {
+    res.status(200).json({ status: 'Bot is running...' });
+  };

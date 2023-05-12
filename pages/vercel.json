@@ -1,0 +1,15 @@
+{
+    "functions": {
+      "api/bot.js": {
+        "runtime": "nodejs14.x"
+      }
+    },
+    "routes": [
+      {
+        "src": "/api/telegram-bot.js",
+        "methods": ["GET"],
+        "dest": "/api/telegram-bot.js"
+      }
+    ]
+  }
+  
