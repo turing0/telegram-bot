@@ -23,7 +23,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "pages/api/telegram-bot.js"  ],
   "exclude": [
     "node_modules"
   ]
