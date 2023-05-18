@@ -2,7 +2,6 @@
 
 const myChatId = '5525041552'
 const token = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk'
-const TelegramBot = require('node-telegram-bot-api');
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -23,9 +22,9 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chat_id: message.chat.id,
+          chat_id: myChatId,
           text: 'Message from user ' + message.chat.id + ': ' + message.text +
-          '\n @'+message.from.username,
+          '\n@'+message.from.username,
         }),
       });
 
@@ -41,16 +40,6 @@ export default async function handler(req, res) {
 
       // Wait for the promises to complete before sending the response
       await Promise.all([sendMessagePromise, sendReceivedMessagePromise]);
-
-      // // Send the user's message back to them
-      // await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     chat_id: message.chat.id,
-      //     text: 'Message from user ' + message.chat.id + ': ' + message.text,
-      //   }),
-      // });
 
       // // Send a separate "Received your message" message
       // await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
