@@ -60,10 +60,8 @@ bot.on('message', (msg) => {
 
 // 监听任意消息类型
 bot.onAnyMessage((msg) => {
-const chatId = msg.chat.id;
+  const chatId = msg.chat.id;
 
-console.log(msg)  // 打印收到的消息,方便调试  
-
-// 发送确认消息
-bot.sendMessage(chatId, 'Received your message');  
+  // 发送确认消息
+  bot.sendMessage(chatId, 'Received your message');  
 });
