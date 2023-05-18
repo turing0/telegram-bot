@@ -9,21 +9,22 @@ export default async function handler(req, res) {
     const { message } = req.body;
 
     if (message && message.text) {
-      const response2 = {
-        method: 'sendMessage',
-        chat_id: message.chat.id,
-        text: '您的回复已收到，我们将尽快回复您！',
-      };
-      res.status(200).json(response2);
 
       // Prepare a response
-      const response = {
-        method: 'sendMessage',
-        chat_id: message.chat.id,
-        text: message.text, // Echo back the user's message
-      };
+      const responses = [
+        {
+          method: 'sendMessage',
+          chat_id: message.chat.id,
+          text: message.text, // Echo back the user's message
+        },
+        {
+          method: 'sendMessage',
+          chat_id: message.chat.id,
+          text: '已收到您的消息，我们将尽快回复您！', // Send a separate message
+        },
+      ];
       // Send the response
-      res.status(200).json(response);
+      res.status(200).json(responses);
       
     } else {
       res.status(200).send({});
