@@ -8,13 +8,17 @@ export default async function handler(req, res) {
     const { message } = req.body;
 
     if (message.text === '/start') {
-      const msg =
-        'Welcome to <i>NextJS News Channel</i> <b>' +
-        message.from.first_name +
-        '</b>.%0ATo get a list of commands sends /help';
-      const ret = await fetch(
-        `https://api.telegram.org/bot${token}/sendMessage?chat_id=${message.chat.id}&text=${msg}&parse_mode=HTML`
-      );
+      // const msg =
+      //   'Welcome to <i>NextJS News Channel</i> <b>' +
+      //   message.from.first_name +
+      //   '</b>.%0ATo get a list of commands sends /help';
+      // const ret = await fetch(
+      //   `https://api.telegram.org/bot${token}/sendMessage?chat_id=${message.chat.id}&text=${msg}&parse_mode=HTML`
+      // );
+      
+      const welcomeMsg =
+       `Welcome to <i>NextJS News Channel</i>, <b>${message.from.first_name}</b>.%0ATo get a list of commands, send /help`;
+      await sendTelegramMessage(message.chat.id, welcomeMsg);
     }
     else if (message.reply_to_message) {  // Forward the message
       const match = message.reply_to_message.text.match(/^Message from user (\d+):/);
@@ -25,25 +29,27 @@ export default async function handler(req, res) {
         chatId = parseInt(match[1]);
         msg = message.text;
       }
-      const replyMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: msg,
-          }),
-        });
-  
-        const okMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: message.chat.id,
-            text: '回复成功！',
-          }),
-        });
-  
-        await Promise.all([replyMessagePromise, okMessagePromise]);
+      // const replyMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      //     method: 'POST',
+      //     headers: { 'Content-Type': 'application/json' },
+      //     body: JSON.stringify({
+      //       chat_id: chatId,
+      //       text: msg,
+      //     }),
+      //   });
+      const replyMessagePromise = sendTelegramMessage(chatId, msg);
+
+      // const okMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     chat_id: message.chat.id,
+      //     text: '回复成功！',
+      //   }),
+      // });
+      const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！');
+
+      await Promise.all([replyMessagePromise, okMessagePromise]);
     }
     else if (message && message.text) {
       // Send the user's message back to them
