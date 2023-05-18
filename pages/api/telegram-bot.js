@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     }
     else if (message && message.text) {
       // Send the user's message back to them
-      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      const sendMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       });
 
       // Send a separate "Received your message" message
-      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      const sendReceivedMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -38,7 +38,28 @@ export default async function handler(req, res) {
         }),
       });
 
-      // res.status(200).send({});
+      // Wait for the promises to complete before sending the response
+      await Promise.all([sendMessagePromise, sendReceivedMessagePromise]);
+
+      // // Send the user's message back to them
+      // await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     chat_id: message.chat.id,
+      //     text: 'Message from user ' + message.chat.id + ': ' + message.text,
+      //   }),
+      // });
+
+      // // Send a separate "Received your message" message
+      // await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     chat_id: message.chat.id,
+      //     text: '已收到您的消息，我们将尽快回复您！',
+      //   }),
+      // });
 
 
       // // Prepare a response
