@@ -18,9 +18,11 @@ export default async function handler(req, res) {
     }
     else if (message.reply_to_message) {  // Forward the message
       const match = message.reply_to_message.text.match(/^Message from user (\d+):/);
+      let chatId = myChatId;
       if (match) {
-        const chatId = parseInt(match[1]);
-        const replyMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        chatId = parseInt(match[1]);
+      }
+      const replyMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -34,12 +36,11 @@ export default async function handler(req, res) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             chat_id: message.chat.id,
-            text: '回复成功',
+            text: '回复成功！',
           }),
         });
   
         await Promise.all([replyMessagePromise, okMessagePromise]);
-      }
     }
     else if (message && message.text) {
       // Send the user's message back to them
@@ -97,6 +98,25 @@ export default async function handler(req, res) {
     res.status(405).send({ error: 'We only support POST requests' });
   }
 }
+
+async function sendTelegramMessage(chatId, text) {
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: text })
+    });
+    const data = await response.json();
+    if (!data.ok) {
+      console.error(`Failed to send message to chat ${chatId}: ${data.description}`);
+    }
+    return data;
+  } catch (error) {
+    console.error(`Failed to send message to chat ${chatId}: ${error.message}`);
+  }
+}
+
 
 // export default async (req, res) => {
 //   const tgbot = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk';
