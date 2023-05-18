@@ -58,10 +58,10 @@ bot.on('message', (msg) => {
   bot.sendMessage(chatId, 'Received your message');
 });
 
-// 监听任意消息类型
-bot.onAnyMessage((msg) => {
-  const chatId = msg.chat.id;
+// // 监听任意消息类型
+// bot.onAnyMessage((msg) => {
+//   const chatId = msg.chat.id;
 
-  // 发送确认消息
-  bot.sendMessage(chatId, 'Received your message');  
-});
+//   // 发送确认消息
+//   bot.sendMessage(chatId, 'Received your message');  
+// });
