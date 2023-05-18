@@ -16,7 +16,6 @@ export default async function handler(req, res) {
       const ret = await fetch(
         `https://api.telegram.org/bot${token}/sendMessage?chat_id=${req.body.message.chat.id}&text=${msg}&parse_mode=HTML`
       );
-      res.status(200).send({});
     }
 
     if (message && message.text) {
