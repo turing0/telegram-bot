@@ -17,8 +17,7 @@ export default async function handler(req, res) {
         `https://api.telegram.org/bot${token}/sendMessage?chat_id=${req.body.message.chat.id}&text=${msg}&parse_mode=HTML`
       );
     }
-
-    if (message && message.text) {
+    else if (message && message.text) {
       // Send the user's message back to them
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
@@ -39,8 +38,7 @@ export default async function handler(req, res) {
         }),
       });
 
-      // Respond to the webhook request
-      res.status(200).send({});
+      // res.status(200).send({});
 
 
       // // Prepare a response
@@ -55,6 +53,10 @@ export default async function handler(req, res) {
     } else {
       res.status(200).send({});
     }
+
+    // Respond to the webhook request
+    res.status(200).send({});
+
   } else {
     res.status(405).send({ error: 'We only support POST requests' });
   }
