@@ -22,6 +22,12 @@ export default async (req, res) => {
       `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
     );
   }
+  else {
+    const message = req.body.message.text;
+    const ret = await fetch(
+      `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
+    );
+  }
   res.status(200).send('OK');
 };
 
