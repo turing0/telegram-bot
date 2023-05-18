@@ -20,43 +20,28 @@ export default async function handler(req, res) {
 
     if (message && message.text) {
       // Send the user's message back to them
-      // await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     chat_id: message.chat.id,
-      //     text: message.text,
-      //   }),
-      // });
-
-      // // Send a separate "Received your message" message
-      // await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     chat_id: message.chat.id,
-      //     text: '已收到您的消息，我们将尽快回复您！',
-      //   }),
-      // });
-
-      // // Respond to the webhook request
-      // res.status(200).send({});
-
-      const responses = [
-        {
-          method: 'sendMessage',
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           chat_id: message.chat.id,
-          text: message.text, // Echo back the user's message
-        },
-        {
-          method: 'sendMessage',
-          chat_id: message.chat.id,
-          text: '已收到您的消息，我们将尽快回复您！', // Send a separate message
-        },
-      ];
+          text: message.text,
+        }),
+      });
 
-      // Send the responses
-      res.status(200).json(responses);
+      // Send a separate "Received your message" message
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: message.chat.id,
+          text: '已收到您的消息，我们将尽快回复您！',
+        }),
+      });
+
+      // Respond to the webhook request
+      res.status(200).send({});
+
 
       // // Prepare a response
       // const response = {
