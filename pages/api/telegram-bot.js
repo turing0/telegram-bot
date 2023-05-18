@@ -9,15 +9,22 @@ export default async function handler(req, res) {
     const { message } = req.body;
 
     if (message && message.text) {
+      const response2 = {
+        method: 'sendMessage',
+        chat_id: message.chat.id,
+        text: '您的回复已收到，我们将尽快回复您！',
+      };
+      res.status(200).json(response2);
+
       // Prepare a response
       const response = {
         method: 'sendMessage',
         chat_id: message.chat.id,
         text: message.text, // Echo back the user's message
       };
-
       // Send the response
       res.status(200).json(response);
+      
     } else {
       res.status(200).send({});
     }
@@ -25,6 +32,35 @@ export default async function handler(req, res) {
     res.status(405).send({ error: 'We only support POST requests' });
   }
 }
+
+// export default async (req, res) => {
+//   const tgbot = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk';
+
+//   if (req.body.message.text === '/start') {
+//     const message =
+//       'Welcome to <i>NextJS News Channel</i> <b>' +
+//       req.body.message.from.first_name +
+//       '</b>.%0ATo get a list of commands sends /help';
+//     const ret = await fetch(
+//       `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
+//     );
+//   }
+//   if (req.body.message.text === '/help') {
+//     const message =
+//       'Help for <i>NextJS News Channel</i>.%0AUse /search <i>keyword</i> to search for <i>keyword</i> in my Medium publication';
+//     const ret = await fetch(
+//       `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
+//     );
+//   }
+//   else {
+//     const message = req.body.message.text;
+//     const ret = await fetch(
+//       `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
+//     );
+//   }
+//   res.status(200).send('OK');
+// };
+
 // // Create a bot that uses 'polling' to fetch new updates
 // const bot = new TelegramBot(token, {polling: false });
 
@@ -64,31 +100,3 @@ export default async function handler(req, res) {
 //   bot.sendMessage(chatId, 'Received your message');  
 // });
 
-
-// export default async (req, res) => {
-//   const tgbot = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk';
-
-//   if (req.body.message.text === '/start') {
-//     const message =
-//       'Welcome to <i>NextJS News Channel</i> <b>' +
-//       req.body.message.from.first_name +
-//       '</b>.%0ATo get a list of commands sends /help';
-//     const ret = await fetch(
-//       `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
-//     );
-//   }
-//   if (req.body.message.text === '/help') {
-//     const message =
-//       'Help for <i>NextJS News Channel</i>.%0AUse /search <i>keyword</i> to search for <i>keyword</i> in my Medium publication';
-//     const ret = await fetch(
-//       `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
-//     );
-//   }
-//   else {
-//     const message = req.body.message.text;
-//     const ret = await fetch(
-//       `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
-//     );
-//   }
-//   res.status(200).send('OK');
-// };
