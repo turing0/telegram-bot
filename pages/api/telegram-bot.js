@@ -8,29 +8,31 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { message } = req.body;
 
-    // if (message.text === '/start') {
-    //   const message =
-    //     'Welcome to <i>NextJS News Channel</i> <b>' +
-    //     message.from.first_name +
-    //     '</b>.%0ATo get a list of commands sends /help';
-    //   const ret = await fetch(
-    //     `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
-    //   );
-    // }
+    if (message.text === '/start') {
+      const message =
+        'Welcome to <i>NextJS News Channel</i> <b>' +
+        message.from.first_name +
+        '</b>.%0ATo get a list of commands sends /help';
+      const ret = await fetch(
+        `https://api.telegram.org/bot${token}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
+      );
+    }
 
     if (message && message.text) {
       // Send the user's message back to them
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: message.chat.id,
-          text: message.text,
+          text: 'Message from user' + message.chat.id + ': ' + message.text,
         }),
       });
 
       // Send a separate "Received your message" message
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: message.chat.id,
           text: '已收到您的消息，我们将尽快回复您！',
