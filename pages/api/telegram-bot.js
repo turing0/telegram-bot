@@ -47,28 +47,30 @@ export default async function handler(req, res) {
     }
     else if (message && message.text) {
       // Send the user's message back to them
-      const sendMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: myChatId,
-          text: 'Message from user ' + message.chat.id + ': ' + message.text +
-          '\n@'+message.from.username,
-        }),
-      });
+      // const sendMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     chat_id: myChatId,
+      //     text: 'Message from user ' + message.chat.id + ': ' + message.text +
+      //     '\n@'+message.from.username,
+      //   }),
+      // });
+      const sendMessagePromise = sendTelegramMessage(myChatId, `Message from user ${message.chat.id}: ${message.text}\n@${message.from.username}`);
 
       // Send a separate "Received your message" message
-      const sendReceivedMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: message.chat.id,
-          text: '已收到您的消息，我们将尽快回复您！',
-        }),
-      });
+      // const sendReceivedMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     chat_id: message.chat.id,
+      //     text: '已收到您的消息，我们将尽快回复您！',
+      //   }),
+      // });
+      const receivedMessagePromise = sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
 
       // Wait for the promises to complete before sending the response
-      await Promise.all([sendMessagePromise, sendReceivedMessagePromise]);
+      await Promise.all([sendMessagePromise, receivedMessagePromise]);
 
       // // Send a separate "Received your message" message
       // await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
