@@ -22,7 +22,6 @@ export default async function handler(req, res) {
       // Send the user's message back to them
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: message.chat.id,
           text: message.text,
@@ -32,7 +31,6 @@ export default async function handler(req, res) {
       // Send a separate "Received your message" message
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: message.chat.id,
           text: '已收到您的消息，我们将尽快回复您！',
