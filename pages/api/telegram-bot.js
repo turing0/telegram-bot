@@ -1,7 +1,10 @@
 // import { Telegram } from 'telegram-bot-api';
 
-const myChatId = '5525041552'
-const token = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk'
+// const myChatId = '5525041552'
+// const token = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk'
+
+const myChatId = process.env.MY_CHAT_ID;
+const token = process.env.TELEGRAM_BOT_TOKEN;
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -75,7 +78,7 @@ async function sendTelegramMessage(chatId, text) {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: text })
+      body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML' })
     });
     const data = await response.json();
     if (!data.ok) {
