@@ -9,12 +9,12 @@ export default async function handler(req, res) {
     const { message } = req.body;
 
     if (message.text === '/start') {
-      const message =
+      const msg =
         'Welcome to <i>NextJS News Channel</i> <b>' +
         message.from.first_name +
         '</b>.%0ATo get a list of commands sends /help';
       const ret = await fetch(
-        `https://api.telegram.org/bot${token}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
+        `https://api.telegram.org/bot${token}/sendMessage?chat_id=${req.body.message.chat.id}&text=${msg}&parse_mode=HTML`
       );
       res.status(200).send({});
     }
