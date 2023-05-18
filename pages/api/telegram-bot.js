@@ -1,5 +1,3 @@
-// import { Telegram } from 'telegram-bot-api';
-
 // const myChatId = '5525041552'
 // const token = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk'
 
@@ -19,7 +17,7 @@ export default async function handler(req, res) {
       //   `https://api.telegram.org/bot${token}/sendMessage?chat_id=${message.chat.id}&text=${msg}&parse_mode=HTML`
       // );      
       const welcomeMsg =
-       `Welcome to <i>NextJS News Channel</i>, <b>${message.from.first_name}</b>.%0ATo get a list of commands, send /help`;
+       `Welcome to <i>NextJS News Channel</i>, <b>${message.from.first_name}</b>.<b>To get a list of commands, send /help`;
       await sendTelegramMessage(message.chat.id, welcomeMsg);
     }
     else if (message.reply_to_message) {  // Forward the message
