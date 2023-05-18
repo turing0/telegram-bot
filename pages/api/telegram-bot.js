@@ -24,7 +24,8 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: message.chat.id,
-          text: 'Message from user ' + message.chat.id + ': ' + message.text,
+          text: 'Message from user ' + message.chat.id + ': ' + message.text +
+          '\n @'+message.from.username,
         }),
       });
 
