@@ -4,35 +4,57 @@ const myChatId = '5525041552'
 const token = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk'
 const TelegramBot = require('node-telegram-bot-api');
 
-// Create a bot that uses 'polling' to fetch new updates
-// const bot = new TelegramBot(token, {polling: true});
-// Create a bot that uses 'webhook' to fetch new updates
-const bot = new TelegramBot(token, {webHook: {port: process.env.PORT, host: process.env.HOST}});
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    const { message } = req.body;
 
-// This informs the Telegram servers of the new webhook.
-bot.setWebHook(`${process.env.URL}/bot${token}`);
+    if (message && message.text) {
+      // Prepare a response
+      const response = {
+        method: 'sendMessage',
+        chat_id: message.chat.id,
+        text: message.text, // Echo back the user's message
+      };
 
-// Matches "/echo [whatever]"
-bot.onText(/\/echo (.+)/, (msg, match) => {
-  // 'msg' is the received Message from Telegram
-  // 'match' is the result of executing the regexp above on the text content
-  // of the message
+      // Send the response
+      res.status(200).json(response);
+    } else {
+      res.status(200).send({});
+    }
+  } else {
+    res.status(405).send({ error: 'We only support POST requests' });
+  }
+}
+// // Create a bot that uses 'polling' to fetch new updates
+// const bot = new TelegramBot(token, {polling: false });
 
-  const chatId = msg.chat.id;
-  const resp = match[1]; // the captured "whatever"
+// // Create a bot that uses 'webhook' to fetch new updates
+// // const bot = new TelegramBot(token, {webHook: {port: process.env.PORT, host: process.env.HOST}});
 
-  // send back the matched "whatever" to the chat
-  bot.sendMessage(chatId, resp);
-});
+// // This informs the Telegram servers of the new webhook.
+// // bot.setWebHook(`${process.env.URL}/bot${token}`);
 
-// Listen for any kind of message. There are different kinds of
-// messages.
-bot.on('message', (msg) => {
-  const chatId = msg.chat.id;
+// // Matches "/echo [whatever]"
+// bot.onText(/\/echo (.+)/, (msg, match) => {
+//   // 'msg' is the received Message from Telegram
+//   // 'match' is the result of executing the regexp above on the text content
+//   // of the message
 
-  // send a message to the chat acknowledging receipt of their message
-  bot.sendMessage(chatId, 'Received your message');
-});
+//   const chatId = msg.chat.id;
+//   const resp = match[1]; // the captured "whatever"
+
+//   // send back the matched "whatever" to the chat
+//   bot.sendMessage(chatId, resp);
+// });
+
+// // Listen for any kind of message. There are different kinds of
+// // messages.
+// bot.on('message', (msg) => {
+//   const chatId = msg.chat.id;
+
+//   // send a message to the chat acknowledging receipt of their message
+//   bot.sendMessage(chatId, 'Received your message');
+// });
 
 // // 监听任意消息类型
 // bot.onAnyMessage((msg) => {
