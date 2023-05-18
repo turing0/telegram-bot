@@ -19,15 +19,18 @@ export default async function handler(req, res) {
     else if (message.reply_to_message) {  // Forward the message
       const match = message.reply_to_message.text.match(/^Message from user (\d+):/);
       let chatId = myChatId;
+      let msg = 'Message from user ' + message.chat.id + ': ' + message.text +
+      '\n@'+message.from.username;
       if (match) {
         chatId = parseInt(match[1]);
+        msg = message.text;
       }
       const replyMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             chat_id: chatId,
-            text: message.text,
+            text: msg,
           }),
         });
   
