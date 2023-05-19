@@ -6,13 +6,14 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    // 检查 token 是否匹配
+    // // 检查 token 是否匹配
     // const token = update.message?.text?.split(' ')[1];
     // if (token !== token) {
     //   console.warn('Received unauthorized request');
     //   return;
     // }
-    const secretToken = req.headers['X-Secret-Token'];
+    // 检查 secret token
+    const secretToken = req.query.token;
     if (secretToken !== token) {
       console.warn('Received unauthorized request');
       res.status(401).send({ error: 'Unauthorized' });
@@ -80,7 +81,7 @@ async function sendTelegramMessage(chatId, text) {
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Secret-Token': token },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML' })
     });
     const data = await response.json();
