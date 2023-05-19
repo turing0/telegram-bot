@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import Layout from '../components/Layout'
+import { useState } from 'react';
+
 // import '../styles/globals.css'
 
 const IndexPage = () => (
