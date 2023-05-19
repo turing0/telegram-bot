@@ -32,6 +32,7 @@ export const getStaticProps: GetStaticProps = async () => {
   // const items: User[] = sampleUserData
 
   const res = await fetch('http://telegram-bot-eight-olive.vercel.app/api/users')
+  console.log(res);
   const apiItems: User[] = await res.json()
   const items: User[] = [...sampleUserData, ...apiItems]
 
