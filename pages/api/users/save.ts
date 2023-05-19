@@ -9,12 +9,13 @@ const handler = (_req: NextApiRequest, res: NextApiResponse) => {
 
     // Assume you're getting the user data in the request body
     const { id, ...data } = _req.body
+    const userId = _req.query.id as string
 
     // Find the user in the array
     const userIndex = sampleUserData.findIndex(user => user.id === id)
 
     if (userIndex === -1) {
-      throw new Error('User not found' + id)
+      throw new Error('User not found' + id + ' ' + userId)
     }
 
     // Update the user data
