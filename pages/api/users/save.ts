@@ -10,7 +10,7 @@ const handler = (_req: NextApiRequest, res: NextApiResponse) => {
     // Assume you're getting the user data in the request body
     const { id, ...data } = _req.body
     const userId = _req.query.id as string
-    const name = _req.query.namw as string
+    const name = _req.query.name as string
 
     // Find the user in the array
     const userIndex = sampleUserData.findIndex(user => user.id === parseInt(userId))
