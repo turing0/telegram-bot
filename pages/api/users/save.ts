@@ -12,7 +12,7 @@ const handler = (_req: NextApiRequest, res: NextApiResponse) => {
     const userId = _req.query.id as string
 
     // Find the user in the array
-    const userIndex = sampleUserData.findIndex(user => user.id === id)
+    const userIndex = sampleUserData.findIndex(user => user.id === parseInt(userId))
 
     if (userIndex === -1) {
       throw new Error('User not found' + id + ' ' + userId)
