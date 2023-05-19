@@ -31,7 +31,7 @@ export const getStaticProps: GetStaticProps = async () => {
   // the component.
   // const items: User[] = sampleUserData
 
-  const res = await fetch(`http://${process.env.VERCEL_URL}/api/users`)
+  const res = await fetch('http://telegram-bot-eight-olive.vercel.app/api/users')
   const apiItems: User[] = await res.json()
   const items: User[] = [...sampleUserData, ...apiItems]
 
