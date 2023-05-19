@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log(config);
 
   try {
-    await writeFile('config.json', JSON.stringify(config, null, 2));
+    await writeFile('public/config.json', JSON.stringify(config, null, 2));
     res.status(200).json({ status: 'ok' });
   } catch (err) {
     res.status(500).json({ status: 'error', error: 'Failed to write to file.' });
