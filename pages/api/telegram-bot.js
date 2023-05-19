@@ -35,12 +35,8 @@ export default async function handler(req, res) {
       //       text: msg,
       //     }),
       //   });
-      const res = await fetch('http://telegram-bot-eight-olive.vercel.app/api/users')
-      const data = await res.json()
-      const firstUserName = data[0].name
-
       const replyMessagePromise = sendTelegramMessage(chatId, msg);
-      const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！'+firstUserName);
+      const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！');
 
       await Promise.all([replyMessagePromise, okMessagePromise]);
     }
@@ -130,22 +126,5 @@ async function sendTelegramMessage(chatId, text) {
 
 //   // send back the matched "whatever" to the chat
 //   bot.sendMessage(chatId, resp);
-// });
-
-// // Listen for any kind of message. There are different kinds of
-// // messages.
-// bot.on('message', (msg) => {
-//   const chatId = msg.chat.id;
-
-//   // send a message to the chat acknowledging receipt of their message
-//   bot.sendMessage(chatId, 'Received your message');
-// });
-
-// // 监听任意消息类型
-// bot.onAnyMessage((msg) => {
-//   const chatId = msg.chat.id;
-
-//   // 发送确认消息
-//   bot.sendMessage(chatId, 'Received your message');  
 // });
 
