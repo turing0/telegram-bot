@@ -35,8 +35,12 @@ export default async function handler(req, res) {
       //       text: msg,
       //     }),
       //   });
+      const res = await fetch('http://telegram-bot-eight-olive.vercel.app/api/users')
+      const data = await res.json()
+      const firstUserName = data[0].name
+
       const replyMessagePromise = sendTelegramMessage(chatId, msg);
-      const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！');
+      const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！'+firstUserName);
 
       await Promise.all([replyMessagePromise, okMessagePromise]);
     }
