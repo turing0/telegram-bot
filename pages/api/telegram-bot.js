@@ -6,13 +6,7 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    // // 检查 token 是否匹配
-    // const token = update.message?.text?.split(' ')[1];
-    // if (token !== token) {
-    //   console.warn('Received unauthorized request');
-    //   return;
-    // }
-    // 检查 secret token
+    // verify secret token
     const secretToken = req.query.token;
     if (secretToken !== token) {
       console.warn('Received unauthorized request');
@@ -22,14 +16,7 @@ export default async function handler(req, res) {
 
     const { message } = req.body;
 
-    if (message.text === '/start') {
-      // const msg =
-      //   'Welcome to <i>NextJS News Channel</i> <b>' +
-      //   message.from.first_name +
-      //   '</b>.%0ATo get a list of commands sends /help';
-      // const ret = await fetch(
-      //   `https://api.telegram.org/bot${token}/sendMessage?chat_id=${message.chat.id}&text=${msg}&parse_mode=HTML`
-      // );      
+    if (message.text === '/start') {   
       const welcomeMsg =
        `Welcome to <i>NextJS News Channel</i>, <b>${message.from.first_name}</b>.\nTo get a list of commands, send /help`;
       await sendTelegramMessage(message.chat.id, welcomeMsg);
@@ -52,7 +39,6 @@ export default async function handler(req, res) {
       //     }),
       //   });
       const replyMessagePromise = sendTelegramMessage(chatId, msg);
-
       const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！');
 
       await Promise.all([replyMessagePromise, okMessagePromise]);
