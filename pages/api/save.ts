@@ -11,6 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { message, reply } = req.body;
   const config = { message, reply };
+  console.log(config);
 
   try {
     await writeFile('config.json', JSON.stringify(config, null, 2));
