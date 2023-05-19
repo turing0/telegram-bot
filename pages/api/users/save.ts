@@ -14,7 +14,7 @@ const handler = (_req: NextApiRequest, res: NextApiResponse) => {
     const userIndex = sampleUserData.findIndex(user => user.id === id)
 
     if (userIndex === -1) {
-      throw new Error('User not found')
+      throw new Error('User not found' + id)
     }
 
     // Update the user data
