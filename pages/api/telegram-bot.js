@@ -1,6 +1,3 @@
-// const myChatId = '5525041552'
-// const token = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk'
-
 const myChatId = process.env.MY_CHAT_ID;
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
