@@ -72,7 +72,7 @@ export default async function handler(req, res) {
     res.status(200).send({});
 
   } else {
-    res.status(405).send({ error: 'We only support POST requests' });
+    res.status(405).send({ error: 'We only support POST requests' + process.env.VERCEL_URL });
   }
 }
 
