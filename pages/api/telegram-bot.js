@@ -56,9 +56,6 @@ export default async function handler(req, res) {
         );
       }
     }
-    // const replyMessagePromise = sendTelegramMessage(chatId, msg);
-    // const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！');
-    // await Promise.all([replyMessagePromise, okMessagePromise]);
     await sendTelegramMessage(message.chat.id, '回复成功！');
 
     return res.status(200).send({});
@@ -98,11 +95,21 @@ export default async function handler(req, res) {
 
 async function sendTelegramMessage(chatId, text) {
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  const body = {
+    chat_id: chatId,
+    text,
+    parse_mode: 'HTML',
+  };
+  if (replyToMessageId) {
+    body.reply_to_message_id = replyToMessageId;
+    body.allow_sending_without_reply = true;
+  }
+  
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML' })
+      body: JSON.stringify(body)
     });
     const data = await response.json();
     if (!data.ok) {
@@ -140,6 +147,32 @@ async function forwardTelegramMessage(chatId, fromChatId, messageId) {
   }
 }
 
+async function copyTelegramMessage(chatId, fromChatId, messageId) {
+  const url = `https://api.telegram.org/bot${token}/copyMessage`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        from_chat_id: fromChatId,
+        message_id: messageId,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      console.error(`Failed to copy message: ${data.description}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`Failed to copy message: ${error.message}`);
+  }
+}
+
 function escapeHtml(str = '') {
   return String(str)
     .replaceAll('&', '&amp;')
@@ -158,48 +191,3 @@ function getForwardOriginSenderUserId(message) {
 
   return null;
 }
-
-// export default async (req, res) => {
-//   const tgbot = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk';
-
-//   if (req.body.message.text === '/start') {
-//     const message =
-//       'Welcome to <i>NextJS News Channel</i> <b>' +
-//       req.body.message.from.first_name +
-//       '</b>.%0ATo get a list of commands sends /help';
-//     const ret = await fetch(
-//       `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
-//     );
-//   }
-//   if (req.body.message.text === '/help') {
-//     const message =
-//       'Help for <i>NextJS News Channel</i>.%0AUse /search <i>keyword</i> to search for <i>keyword</i> in my Medium publication';
-//     const ret = await fetch(
-//       `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
-//     );
-//   }
-//   else {
-//     const message = req.body.message.text;
-//     const ret = await fetch(
-//       `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${req.body.message.chat.id}&text=${message}&parse_mode=HTML`
-//     );
-//   }
-//   res.status(200).send('OK');
-// };
-
-// // Create a bot that uses 'polling' to fetch new updates
-// const bot = new TelegramBot(token, {polling: false });
-
-// // Create a bot that uses 'webhook' to fetch new updates
-// // const bot = new TelegramBot(token, {webHook: {port: process.env.PORT, host: process.env.HOST}});
-
-// // This informs the Telegram servers of the new webhook.
-// // bot.setWebHook(`${process.env.URL}/bot${token}`);
-
-//   const chatId = msg.chat.id;
-//   const resp = match[1]; // the captured "whatever"
-
-//   // send back the matched "whatever" to the chat
-//   bot.sendMessage(chatId, resp);
-// });
-
