@@ -94,6 +94,10 @@ export default async function handler(req, res) {
   }
 
   const { message } = req.body;
+  if (!message) {
+    console.log('Ignored non-message update:', update);
+    return res.status(200).send({});
+  }
   const text = message.text || message.caption || '';
   const username = message.from?.username ? `@${message.from.username}` : '无username';
   const isAdminChat = String(message.chat.id) === String(myChatId);
