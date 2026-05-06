@@ -156,7 +156,9 @@ export default async function handler(req, res) {
     if (topicGroupChatId && String(message.chat.id) !== String(topicGroupChatId)) {
       const topicTitle = makeTopicTitle(message.from, message.chat.id);
       const topicResule = await createForumTopic(topicGroupChatId, topicTitle);
+      const topic_thread_id = topicResule?.message_thread_id;
       console.log('Created forum topic:', topicResule);
+      console.log('topic_thread_id:', topic_thread_id);
     }
 
     // 转发用户原消息给管理员
