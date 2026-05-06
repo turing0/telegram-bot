@@ -1,15 +1,62 @@
 const myChatId = process.env.MY_CHAT_ID;
 const token = process.env.TELEGRAM_BOT_TOKEN;
+
+// 在 Vercel 上会自动导入 KV，本地开发时可选
+let kv = null;
+try {
+  const kvModule = require('@vercel/kv');
+  kv = kvModule.kv;
+} catch (e) {
+  console.log('KV not available, using file system');
+}
+
 const fs = require('fs');
 const path = require('path');
-
 const configPath = path.join(process.cwd(), 'config', 'auto-replies.json');
+const REPLIES_KEY = 'auto-replies:list';
 
-function loadAutoReplies() {
+/**
+ * 判断是否在 Vercel 环境
+ * 
+ * Vercel 会自动注入以下环境变量：
+ * - VERCEL: '1'
+ * - VERCEL_ENV: 'production' | 'preview' | 'development'
+ * - KV_REST_API_URL: Vercel KV 的 API 地址
+ * - KV_REST_API_TOKEN: Vercel KV 的认证令牌
+ * 
+ * 本地开发/自建服务器：这些变量都不存在
+ */
+function isVercelEnvironment() {
+  // 方法1：检查 Vercel 标志环境变量（最可靠）
+  if (process.env.VERCEL === '1') {
+    return true;
+  }
+  // 方法2：检查 KV 相关环境变量
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    return true;
+  }
+  return false;
+}
+
+async function loadAutoReplies() {
   try {
-    const data = fs.readFileSync(configPath, 'utf8');
-    return JSON.parse(data);
-  } catch {
+    if (isVercelEnvironment() && kv) {
+      // Vercel 环境：使用 KV
+      const data = await kv.get(REPLIES_KEY);
+      console.log('[Vercel] Loading auto replies from KV');
+      return data || [];
+    } else {
+      // 本地开发/自建服务器：使用文件系统
+      try {
+        const data = fs.readFileSync(configPath, 'utf8');
+        console.log('[Local/Server] Loading auto replies from file system');
+        return JSON.parse(data);
+      } catch {
+        return [];
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load auto replies:', error);
     return [];
   }
 }
@@ -91,7 +138,7 @@ export default async function handler(req, res) {
     return res.status(200).send({});
   }
   else if (message) {    // 普通用户发来的消息
-    const autoReplies = loadAutoReplies();
+    const autoReplies = await loadAutoReplies();
     const matchedReply = checkAutoReplyMatch(text, autoReplies);
 
     if (matchedReply) {
