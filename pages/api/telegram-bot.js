@@ -2,61 +2,64 @@ const myChatId = process.env.MY_CHAT_ID;
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
 export default async function handler(req, res) {
-  if (req.method === 'POST') {
-    // verify secret token
-    const secretToken = req.query.token;
-    if (secretToken !== token) {
-      console.warn('Received unauthorized request');
-      res.status(401).send({ error: 'Unauthorized' });
-      return;
-    }
-
-    const { message } = req.body;
-
-    if (message.text === '/start') {   
-      const welcomeMsg =
-       `Welcome to <i>NextJS News Channel</i>, <b>${message.from.first_name}</b>.\nTo get a list of commands, send /help`;
-      await sendTelegramMessage(message.chat.id, welcomeMsg);
-    }
-    else if (message.reply_to_message) {  // Forward the message
-      const match = message.reply_to_message.text.match(/^Message from user (\d+):/);
-      let chatId = myChatId;
-      let msg = 'Message from user ' + message.chat.id + ': ' + message.text +
-      '\n@'+message.from.username;
-      if (match) {
-        chatId = parseInt(match[1]);
-        msg = message.text;
-      }
-      // const replyMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      //     method: 'POST',
-      //     headers: { 'Content-Type': 'application/json' },
-      //     body: JSON.stringify({
-      //       chat_id: chatId,
-      //       text: msg,
-      //     }),
-      //   });
-      const replyMessagePromise = sendTelegramMessage(chatId, msg);
-      const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！');
-
-      await Promise.all([replyMessagePromise, okMessagePromise]);
-    }
-    else if (message && message.text) {
-      const sendMessagePromise = sendTelegramMessage(myChatId, `Message from user ${message.chat.id}: ${message.text}\n@${message.from.username}`);
-      const receivedMessagePromise = sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
-
-      // Wait for the promises to complete before sending the response
-      await Promise.all([sendMessagePromise, receivedMessagePromise]);
-
-    } else {
-      res.status(200).send({});
-    }
-
-    // Respond to the webhook request
-    res.status(200).send({});
-
-  } else {
-    res.status(405).send({ error: 'We only support POST requests' + process.env.VERCEL_URL });
+  if (req.method !== 'POST') {
+    return res.status(405).send({
+      error: 'We only support POST requests',
+    });
   }
+
+  // verify secret token
+  const secretToken = req.query.token;
+  if (secretToken !== token) {
+    console.warn('Received unauthorized request');
+    res.status(401).send({ error: 'Unauthorized' });
+    return;
+  }
+
+  const { message } = req.body;
+  const text = message.text || message.caption || '';
+  const username = message.from?.username ? `@${message.from.username}` : '无用户名';
+
+  if (message.text === '/start') {   
+    const welcomeMsg =
+      `Welcome to <i>NextJS News Channel</i>, <b>${message.from.first_name}</b>.\nTo get a list of commands, send /help`;
+    await sendTelegramMessage(message.chat.id, welcomeMsg);
+  }
+  else if (message.reply_to_message) {  // Forward the message
+    const match = message.reply_to_message.text.match(/^Message from user (\d+):/);
+    let chatId = myChatId;
+    let msg = 'Message from user ' + message.chat.id + ': ' + escapeHtml(text) + escapeHtml(username);
+    if (match) {
+      chatId = parseInt(match[1]);
+      msg = escapeHtml(text);
+    }
+    // const replyMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({
+    //       chat_id: chatId,
+    //       text: msg,
+    //     }),
+    //   });
+    const replyMessagePromise = sendTelegramMessage(chatId, msg);
+    const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！');
+
+    await Promise.all([replyMessagePromise, okMessagePromise]);
+    return res.status(200).send({});
+  }
+  else if (message && message.text) {
+    const sendMessagePromise = sendTelegramMessage(myChatId, `Message from user ${message.chat.id}: ${message.text}\n@${message.from.username}`);
+    const receivedMessagePromise = sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
+
+    await Promise.all([sendMessagePromise, receivedMessagePromise]);
+    return res.status(200).send({});
+  } else {
+    res.status(200).send({});
+  }
+
+  // Respond to the webhook request
+  res.status(200).send({});
+
 }
 
 async function sendTelegramMessage(chatId, text) {
@@ -77,6 +80,14 @@ async function sendTelegramMessage(chatId, text) {
   }
 }
 
+function escapeHtml(str = '') {
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
 
 // export default async (req, res) => {
 //   const tgbot = '5975588613:AAFlmhxm_XRZ4RhqLOnfK7StJVbkJ7fINZk';
