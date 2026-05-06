@@ -220,7 +220,8 @@ export default async function handler(req, res) {
 
     // 转发用户原消息
     if (userTopicId) {
-      await forwardTelegramMessage(topicGroupChatId, message.chat.id, message.message_id, userTopicId);
+      // await forwardTelegramMessage(topicGroupChatId, message.chat.id, message.message_id, userTopicId);
+      await forwardToUserTopicWithRetry(message, userTopicId);
     } else {
       await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     }
@@ -255,7 +256,52 @@ export default async function handler(req, res) {
   // Respond to the webhook request
   res.status(200).send({});
 }
+async function forwardToUserTopicWithRetry(message, userTopicId) {
+  const userChatId = message.chat.id;
 
+  let forwardResult = await forwardTelegramMessage(
+    topicGroupChatId,
+    message.chat.id,
+    message.message_id,
+    userTopicId
+  );
+
+  if (forwardResult?.ok) {
+    return forwardResult;
+  }
+
+  if (!isMessageThreadNotFoundError(forwardResult)) {
+    return forwardResult;
+  }
+
+  console.warn(
+    `Topic thread not found. Recreating topic for user ${userChatId}. Old topicId: ${userTopicId}`
+  );
+
+  // 删除旧映射
+  await deleteTopicMapping(userChatId, userTopicId);
+  // 重新创建 topic
+  userTopicId = await getOrCreateUserTopicId(userChatId, message.from);
+
+  if (!userTopicId) {
+    console.error('Failed to recreate topic, fallback to myChatId');
+    return await forwardTelegramMessage(
+      myChatId,
+      message.chat.id,
+      message.message_id
+    );
+  }
+
+  // 重新转发
+  forwardResult = await forwardTelegramMessage(
+    topicGroupChatId,
+    message.chat.id,
+    message.message_id,
+    userTopicId
+  );
+
+  return forwardResult;
+}
 async function sendTelegramMessage(chatId, text, replyToMessageId = null) {
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
   const body = {
@@ -313,7 +359,41 @@ async function forwardTelegramMessage(chatId, fromChatId, messageId, messageThre
     console.error(`Failed to forward message: ${error.message}`);
   }
 }
+async function deleteTopicMapping(userChatId, messageThreadId = null) {
+  const userKey = String(userChatId);
 
+  try {
+    if (isVercelEnvironment() && kv) {
+      await kv.hdel(TOPIC_MAP_KEY, userKey);
+
+      if (messageThreadId) {
+        await kv.hdel(TOPIC_TITLE_MAP_KEY, String(messageThreadId));
+      }
+
+      return;
+    }
+
+    // 删除 userChatId -> topicId
+    try {
+      const data = fs.readFileSync(topicMapPath, 'utf8');
+      const map = JSON.parse(data);
+      delete map[userKey];
+      fs.writeFileSync(topicMapPath, JSON.stringify(map, null, 2), 'utf8');
+    } catch {}
+
+    // 删除 topicId -> userChatId
+    if (messageThreadId) {
+      try {
+        const data = fs.readFileSync(topicTitleMapPath, 'utf8');
+        const map = JSON.parse(data);
+        delete map[String(messageThreadId)];
+        fs.writeFileSync(topicTitleMapPath, JSON.stringify(map, null, 2), 'utf8');
+      } catch {}
+    }
+  } catch (error) {
+    console.error('Failed to delete topic mapping:', error);
+  }
+}
 async function copyTelegramMessage(chatId, fromChatId, messageId) {
   const url = `https://api.telegram.org/bot${token}/copyMessage`;
 
