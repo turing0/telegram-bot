@@ -215,25 +215,25 @@ export default async function handler(req, res) {
     } else {
       await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     }
+    // const forwardResult = await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     
-    const forwardResult = await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
-    
-    const forwardedMessage = forwardResult?.result;
-    const originUserId = getForwardOriginSenderUserId(forwardedMessage);
-    const originalChatId = String(message.chat.id);
-    const originMatchesOriginalUser = originUserId === originalChatId;
-    // 如果 forward_origin.sender_user.id 没有，或者和原 chat.id 不一致，才补发消息来源
-    if (!originMatchesOriginalUser) {
-      const header =
-        `Message from user ${message.chat.id}:↑\n` +
-        `${escapeHtml(username)}\n` +
-        `请回复这条消息来回复用户。`;
-
-      await sendTelegramMessage(
-        myChatId,
-        header,
-        forwardedMessage?.message_id
-      );
+    if (!userTopicId) {
+      const forwardedMessage = forwardResult?.result;
+      const originUserId = getForwardOriginSenderUserId(forwardedMessage);
+      const originalChatId = String(message.chat.id);
+      const originMatchesOriginalUser = originUserId === originalChatId;
+      // 如果 forward_origin.sender_user.id 没有，或者和原 chat.id 不一致，才补发消息来源
+      if (!originMatchesOriginalUser) {
+        const header =
+          `Message from user ${message.chat.id}:↑\n` +
+          `${escapeHtml(username)}\n` +
+          `请回复这条消息来回复用户。`;
+        await sendTelegramMessage(
+          myChatId,
+          header,
+          forwardedMessage?.message_id
+        );
+      }
     }
     
     // await sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
