@@ -157,10 +157,14 @@ export default async function handler(req, res) {
   const isTopicGroupChat =
   topicGroupChatId && String(message.chat.id) === String(topicGroupChatId);
 
-  if (message.text === '/start') {   
+  if (message.text === '/start') {
     const welcomeMsg =
       `Welcome to <i>NextJS News Channel</i>, <b>${message.from.first_name}</b>.\nTo get a list of commands, send /help`;
     await sendTelegramMessage(message.chat.id, welcomeMsg);
+    // 创建topic（如果配置了 topicGroupChatId，并且用户消息不是来自 topicGroupChatId）
+    if (topicGroupChatId && String(message.chat.id) !== String(topicGroupChatId)) {
+      await getOrCreateUserTopicId(message.chat.id, message.from);
+    }
     return res.status(200).send({});
   }
   else if (isAdminChat && message.reply_to_message) {  // 管理员聊天里的 reply，才当成“管理员回复用户”
