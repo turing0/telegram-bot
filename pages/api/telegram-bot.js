@@ -186,10 +186,10 @@ export default async function handler(req, res) {
       targetChatId = getForwardOriginSenderUserId(message.reply_to_message);
     }
     if (targetChatId) {
-      if (text) {
-        await sendTelegramMessage(targetChatId, escapeHtml(text));
+      if (message.text) {
+        await sendTelegramMessage(targetChatId, escapeHtml(message.text));
       } else {
-        // 管理员回复的是贴纸、图片、语音、文件等
+        // 管理员回复的是图片、语音、文件、贴纸、带 caption 的媒体等
         await copyTelegramMessage(
           targetChatId,
           message.chat.id,
@@ -222,11 +222,12 @@ export default async function handler(req, res) {
     }
 
     // 转发用户原消息
+    let forwardResult = null;
     if (userTopicId) {
       // await forwardTelegramMessage(topicGroupChatId, message.chat.id, message.message_id, userTopicId);
-      await forwardToUserTopicWithRetry(message, userTopicId);
+      forwardResult = await forwardToUserTopicWithRetry(message, userTopicId);
     } else {
-      await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
+      forwardResult = await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     }
     // const forwardResult = await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     
