@@ -346,7 +346,7 @@ async function getOrCreateUserTopicId(userChatId, from) {
   const savedTopicId = await getSavedTopicId(userChatId);
 
   if (savedTopicId) {
-    console.log(`Use existing topic for user ${userChatId}:`, savedTopicId);
+    // console.log(`Use existing topic for user ${userChatId}:`, savedTopicId);
     return savedTopicId;
   }
 
@@ -361,8 +361,7 @@ async function getOrCreateUserTopicId(userChatId, from) {
   const messageThreadId = topicResult.message_thread_id;
 
   await saveTopicId(userChatId, messageThreadId);
-
-  console.log(`Created new topic for user ${userChatId}:`, messageThreadId);
+  // console.log(`Created new topic for user ${userChatId}:`, messageThreadId);
 
   return messageThreadId;
 }
