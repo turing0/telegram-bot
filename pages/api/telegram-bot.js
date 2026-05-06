@@ -65,6 +65,9 @@ export default async function handler(req, res) {
     return res.status(200).send({});
   }
   else if (message) {    // 普通用户发来的消息
+    // 转发用户原消息给管理员
+    const forwardResult = forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
+    
     const forwardedMessage = forwardResult?.result;
     const originUserId = getForwardOriginSenderUserId(forwardedMessage);
     const originalChatId = String(message.chat.id);
@@ -83,11 +86,9 @@ export default async function handler(req, res) {
         forwardedMessage?.message_id
       );
     }
-    // 转发用户原消息给管理员
-    const sendMessagePromise = forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
-    const receivedMessagePromise = sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
-
-    await Promise.all([sendMessagePromise, receivedMessagePromise]);
+    
+    await sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
+    
     return res.status(200).send({});
   } else {
     res.status(200).send({});
