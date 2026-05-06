@@ -619,3 +619,8 @@ function getForwardOriginSenderUserId(message) {
 
   return null;
 }
+
+function isMessageThreadNotFoundError(result) {
+  const description = result?.description || '';
+  return description.toLowerCase().includes('message thread not found');
+}
