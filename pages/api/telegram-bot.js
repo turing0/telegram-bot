@@ -384,8 +384,7 @@ async function handleTopicGroupAdminMessage(message) {
   }
 
   // const isAdmin = await isTelegramChatAdmin(message.chat.id, fromUserId);
-  const isAdmin = fromUserId===myChatId; // 只允许管理员账号发消息
-  console.log(isAdmin, fromUserId, myChatId)
+  const isAdmin = fromUserId==myChatId; // 只允许管理员账号发消息
 
   if (!isAdmin) {
     // console.log('Ignored non-admin message in topic group:', fromUserId);
