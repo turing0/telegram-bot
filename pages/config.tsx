@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import type { GetServerSideProps } from 'next';
+import { FormEvent, useEffect, useState } from 'react';
+import { isConfigAuthenticated, isConfigPasswordSet } from '../utils/config-auth';
 
 interface AutoReply {
   id: string;
@@ -14,6 +16,11 @@ interface EditingState {
   matchType: 'exact' | 'contains';
 }
 
+interface ConfigProps {
+  authenticated: boolean;
+  passwordConfigured: boolean;
+}
+
 const matchTypeLabels = {
   exact: '精准匹配',
   contains: '包含匹配',
@@ -25,22 +32,104 @@ const inputClassName =
 const secondaryButtonClassName =
   'inline-flex h-10 items-center justify-center rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50';
 
-export default function Config() {
+function LoginView({ passwordConfigured }: { passwordConfigured: boolean }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const submitPassword = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/config-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      if (res.ok) {
+        window.location.reload();
+        return;
+      }
+
+      setError(res.status === 500 ? '请先配置环境变量 CONFIG_PAGE_PASSWORD' : '密码不正确');
+    } catch (loginError) {
+      console.error('Failed to login:', loginError);
+      setError('登录失败，请稍后重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 text-slate-900">
+      <main className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="mb-2 text-sm font-medium text-sky-600">Telegram Bot</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-950">配置页登录</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          输入管理密码后才能查看和编辑自动回复规则。
+        </p>
+
+        {!passwordConfigured ? (
+          <div className="mt-5 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
+            当前没有配置 <span className="font-semibold">CONFIG_PAGE_PASSWORD</span> 环境变量。
+          </div>
+        ) : null}
+
+        <form onSubmit={submitPassword} className="mt-6 space-y-4">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-slate-700">密码</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className={inputClassName}
+              placeholder="请输入管理密码"
+              autoComplete="current-password"
+            />
+          </label>
+
+          {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+
+          <button
+            type="submit"
+            disabled={loading || !password}
+            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? '验证中...' : '进入配置页'}
+          </button>
+        </form>
+      </main>
+    </div>
+  );
+}
+
+export default function Config({ authenticated, passwordConfigured }: ConfigProps) {
   const [replies, setReplies] = useState<AutoReply[]>([]);
   const [newKeyword, setNewKeyword] = useState('');
   const [newReply, setNewReply] = useState('');
-  const [newMatchType, setNewMatchType] = useState<'exact' | 'contains'>('contains');
+  const [newMatchType, setNewMatchType] = useState<'exact' | 'contains'>('exact');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<EditingState | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchReplies();
-  }, []);
+    if (authenticated) {
+      fetchReplies();
+    }
+  }, [authenticated]);
 
   const fetchReplies = async () => {
     try {
       const res = await fetch('/api/auto-replies');
+
+      if (res.status === 401) {
+        window.location.reload();
+        return;
+      }
+
       const data = await res.json();
       setReplies(data);
     } catch (error) {
@@ -69,7 +158,7 @@ export default function Config() {
       if (res.ok) {
         setNewKeyword('');
         setNewReply('');
-        setNewMatchType('contains');
+        setNewMatchType('exact');
         await fetchReplies();
       }
     } catch (error) {
@@ -144,6 +233,10 @@ export default function Config() {
     }
   };
 
+  if (!authenticated) {
+    return <LoginView passwordConfigured={passwordConfigured} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
@@ -166,7 +259,7 @@ export default function Config() {
               </div>
               <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-medium uppercase text-slate-500">默认模式</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950">包含</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">精准</p>
               </div>
             </div>
           </div>
@@ -186,7 +279,7 @@ export default function Config() {
                   type="text"
                   placeholder="例如：hello"
                   value={newKeyword}
-                  onChange={(e) => setNewKeyword(e.target.value)}
+                  onChange={(event) => setNewKeyword(event.target.value)}
                   className={inputClassName}
                 />
               </label>
@@ -195,11 +288,13 @@ export default function Config() {
                 <span className="mb-1.5 block text-sm font-medium text-slate-700">匹配方式</span>
                 <select
                   value={newMatchType}
-                  onChange={(e) => setNewMatchType(e.target.value as 'exact' | 'contains')}
+                  onChange={(event) =>
+                    setNewMatchType(event.target.value as 'exact' | 'contains')
+                  }
                   className={inputClassName}
                 >
-                  <option value="contains">包含匹配</option>
                   <option value="exact">精准匹配</option>
+                  <option value="contains">包含匹配</option>
                 </select>
               </label>
 
@@ -208,7 +303,7 @@ export default function Config() {
                 <textarea
                   placeholder="输入机器人要发送的回复内容"
                   value={newReply}
-                  onChange={(e) => setNewReply(e.target.value)}
+                  onChange={(event) => setNewReply(event.target.value)}
                   rows={6}
                   className={inputClassName}
                 />
@@ -255,30 +350,30 @@ export default function Config() {
                           <input
                             type="text"
                             value={editingData.keyword}
-                            onChange={(e) =>
-                              setEditingData({ ...editingData, keyword: e.target.value })
+                            onChange={(event) =>
+                              setEditingData({ ...editingData, keyword: event.target.value })
                             }
                             className={inputClassName}
                           />
                           <select
                             value={editingData.matchType}
-                            onChange={(e) =>
+                            onChange={(event) =>
                               setEditingData({
                                 ...editingData,
-                                matchType: e.target.value as 'exact' | 'contains',
+                                matchType: event.target.value as 'exact' | 'contains',
                               })
                             }
                             className={inputClassName}
                           >
-                            <option value="contains">包含匹配</option>
                             <option value="exact">精准匹配</option>
+                            <option value="contains">包含匹配</option>
                           </select>
                         </div>
 
                         <textarea
                           value={editingData.reply}
-                          onChange={(e) =>
-                            setEditingData({ ...editingData, reply: e.target.value })
+                          onChange={(event) =>
+                            setEditingData({ ...editingData, reply: event.target.value })
                           }
                           rows={4}
                           className={inputClassName}
@@ -345,3 +440,12 @@ export default function Config() {
     </div>
   );
 }
+
+export const getServerSideProps: GetServerSideProps<ConfigProps> = async ({ req }) => {
+  return {
+    props: {
+      authenticated: isConfigAuthenticated(req.headers.cookie),
+      passwordConfigured: isConfigPasswordSet(),
+    },
+  };
+};

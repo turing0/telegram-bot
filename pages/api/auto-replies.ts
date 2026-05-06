@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { isConfigAuthenticated } from '../../utils/config-auth';
 
 // 在 Vercel 上会自动导入 KV，本地开发时可选
 let kv: any = null;
@@ -80,6 +81,10 @@ async function writeReplies(replies: AutoReply[]): Promise<void> {
 }
 
 export default async function handler(req: any, res: any) {
+  if (!isConfigAuthenticated(req.headers.cookie)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   if (req.method === 'GET') {
     const replies = await readReplies();
     res.status(200).json(replies);
@@ -90,7 +95,7 @@ export default async function handler(req: any, res: any) {
       id: Date.now().toString(),
       keyword,
       reply,
-      matchType: matchType || 'contains',
+      matchType: matchType || 'exact',
     };
     replies.push(newReply);
     await writeReplies(replies);
@@ -100,7 +105,7 @@ export default async function handler(req: any, res: any) {
     const replies = await readReplies();
     const index = replies.findIndex(r => r.id === id);
     if (index !== -1) {
-      replies[index] = { id, keyword, reply, matchType: matchType || 'contains' };
+      replies[index] = { id, keyword, reply, matchType: matchType || 'exact' };
       await writeReplies(replies);
       res.status(200).json(replies[index]);
     } else {
