@@ -18,6 +18,7 @@ export default async function handler(req, res) {
   const { message } = req.body;
   const text = message.text || message.caption || '';
   const username = message.from?.username ? `@${message.from.username}` : '无username';
+  const isAdminChat = String(message.chat.id) === String(myChatId);
 
   if (message.text === '/start') {   
     const welcomeMsg =
@@ -25,7 +26,7 @@ export default async function handler(req, res) {
     await sendTelegramMessage(message.chat.id, welcomeMsg);
     return res.status(200).send({});
   }
-  else if (message.reply_to_message) {  // 管理员回复用户 Forward the message
+  else if (isAdminChat && message.reply_to_message) {  // 管理员聊天里的 reply，才当成“管理员回复用户”
     let targetChatId = null;
     const repliedText =
         message.reply_to_message.text ||
@@ -34,8 +35,6 @@ export default async function handler(req, res) {
     
     // 情况 1：管理员回复的是 Message from user xxx: 这条提示消息
     const match = repliedText.match(/^Message from user (\d+):/);
-    let chatId = myChatId;
-    let msg = 'Message from user ' + message.chat.id + ': ' + escapeHtml(text) + escapeHtml(username);
     if (match) {
       // chatId = parseInt(match[1]);
       // msg = escapeHtml(text);
@@ -76,8 +75,7 @@ export default async function handler(req, res) {
     if (!originMatchesOriginalUser) {
       const header =
         `Message from user ${message.chat.id}:\n` +
-        `Name: ${escapeHtml(message.from?.first_name)}\n` +
-        `Username: ${escapeHtml(username)}\n\n` +
+        `${escapeHtml(username)}\n\n` +
         `请回复这条消息来回复用户。`;
 
       await sendTelegramMessage(
