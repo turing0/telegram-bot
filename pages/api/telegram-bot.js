@@ -204,11 +204,18 @@ export default async function handler(req, res) {
     }
 
     // 创建topic（如果配置了 topicGroupChatId，并且用户消息不是来自 topicGroupChatId）
+    let userTopicId = null;
     if (topicGroupChatId && String(message.chat.id) !== String(topicGroupChatId)) {
       userTopicId = await getOrCreateUserTopicId(message.chat.id, message.from);
     }
 
-    // 转发用户原消息给管理员
+    // 转发用户原消息
+    if (userTopicId) {
+      await forwardTelegramMessage(topicGroupChatId, message.chat.id, message.message_id);
+    } else {
+      await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
+    }
+    
     const forwardResult = await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     
     const forwardedMessage = forwardResult?.result;
