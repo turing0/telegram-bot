@@ -93,7 +93,7 @@ export default async function handler(req, res) {
   res.status(200).send({});
 }
 
-async function sendTelegramMessage(chatId, text) {
+async function sendTelegramMessage(chatId, text, replyToMessageId = null) {
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
   const body = {
     chat_id: chatId,
