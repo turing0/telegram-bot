@@ -1,4 +1,5 @@
 const myChatId = process.env.MY_CHAT_ID;
+const topicGroupChatId = process.env.TOPIC_GROUP_CHAT_ID || process.env.TOPIC_CHAT_ID || null;
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
 // 在 Vercel 上会自动导入 KV，本地开发时可选
@@ -147,6 +148,11 @@ export default async function handler(req, res) {
       return res.status(200).send({});
     }
 
+    if (topicGroupChatId && String(message.chat.id) !== String(topicGroupChatId)) {
+      const topicTitle = makeTopicTitle(message.from, message.chat.id);
+      await createForumTopic(topicGroupChatId, topicTitle);
+    }
+
     // 转发用户原消息给管理员
     const forwardResult = await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     
@@ -256,6 +262,43 @@ async function copyTelegramMessage(chatId, fromChatId, messageId) {
     return data;
   } catch (error) {
     console.error(`Failed to copy message: ${error.message}`);
+  }
+}
+
+function makeTopicTitle(from, chatId) {
+  const nickname = from?.first_name || '无昵称';
+  const username = from?.username ? `@${from.username}` : '无username';
+  let title = `${nickname}-${username}-${chatId}`;
+  title = title.replace(/\s+/g, ' ').replace(/[\r\n]/g, ' ').trim();
+  if (title.length > 128) {
+    title = title.slice(0, 128);
+  }
+  return title;
+}
+
+async function createForumTopic(chatId, name) {
+  const url = `https://api.telegram.org/bot${token}/createForumTopic`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        name,
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.ok) {
+      console.error(`Failed to create forum topic in chat ${chatId}: ${data.description}`);
+      return null;
+    }
+
+    return data.result;
+  } catch (error) {
+    console.error(`Failed to create forum topic: ${error.message}`);
+    return null;
   }
 }
 
