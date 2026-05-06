@@ -211,7 +211,7 @@ export default async function handler(req, res) {
 
     // 转发用户原消息
     if (userTopicId) {
-      await forwardTelegramMessage(topicGroupChatId, message.chat.id, message.message_id);
+      await forwardTelegramMessage(`${topicGroupChatId}_${userTopicId}`, message.chat.id, message.message_id);
     } else {
       await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     }
