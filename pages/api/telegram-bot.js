@@ -1,5 +1,5 @@
 const myChatId = process.env.MY_CHAT_ID;
-const topicGroupChatId = process.env.TOPIC_GROUP_CHAT_ID || process.env.TOPIC_CHAT_ID || null;
+const topicGroupChatId = process.env.TOPIC_GROUP_CHAT_ID || null;
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
 // 在 Vercel 上会自动导入 KV，本地开发时可选
@@ -134,7 +134,7 @@ export default async function handler(req, res) {
         );
       }
     }
-    await sendTelegramMessage(message.chat.id, '回复成功！');
+    // await sendTelegramMessage(message.chat.id, '回复成功！');
 
     return res.status(200).send({});
   }
@@ -148,9 +148,11 @@ export default async function handler(req, res) {
       return res.status(200).send({});
     }
 
+    // 创建topic（如果配置了 topicGroupChatId，并且用户消息不是来自 topicGroupChatId）
     if (topicGroupChatId && String(message.chat.id) !== String(topicGroupChatId)) {
       const topicTitle = makeTopicTitle(message.from, message.chat.id);
-      await createForumTopic(topicGroupChatId, topicTitle);
+      topicResule = await createForumTopic(topicGroupChatId, topicTitle);
+      console.log('Created forum topic:', topicResule);
     }
 
     // 转发用户原消息给管理员
@@ -174,7 +176,7 @@ export default async function handler(req, res) {
       );
     }
     
-    await sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
+    // await sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
 
     return res.status(200).send({});
   } else {
