@@ -32,9 +32,9 @@ function isVercelEnvironment() {
     return true;
   }
   // 方法2：检查 KV 相关环境变量
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
-    return true;
-  }
+  // if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  //   return true;
+  // }
   return false;
 }
 

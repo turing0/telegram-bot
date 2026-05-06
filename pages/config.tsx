@@ -40,13 +40,19 @@ function LoginView({ passwordConfigured }: { passwordConfigured: boolean }) {
   const submitPassword = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+
+    if (!password.trim()) {
+      setError('请输入管理密码');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch('/api/config-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password: password.trim() }),
       });
 
       if (res.ok) {
@@ -95,7 +101,7 @@ function LoginView({ passwordConfigured }: { passwordConfigured: boolean }) {
 
           <button
             type="submit"
-            disabled={loading || !password}
+            disabled={loading}
             className="inline-flex h-11 w-full items-center justify-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? '验证中...' : '进入配置页'}
