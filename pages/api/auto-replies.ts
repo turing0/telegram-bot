@@ -7,6 +7,7 @@ interface AutoReply {
   id: string;
   keyword: string;
   reply: string;
+  matchType: 'exact' | 'contains';
 }
 
 async function readReplies(): Promise<AutoReply[]> {
@@ -27,22 +28,23 @@ export default async function handler(req: any, res: any) {
     const replies = await readReplies();
     res.status(200).json(replies);
   } else if (req.method === 'POST') {
-    const { keyword, reply } = req.body;
+    const { keyword, reply, matchType } = req.body;
     const replies = await readReplies();
     const newReply: AutoReply = {
       id: Date.now().toString(),
       keyword,
       reply,
+      matchType: matchType || 'contains',
     };
     replies.push(newReply);
     await writeReplies(replies);
     res.status(201).json(newReply);
   } else if (req.method === 'PUT') {
-    const { id, keyword, reply } = req.body;
+    const { id, keyword, reply, matchType } = req.body;
     const replies = await readReplies();
     const index = replies.findIndex(r => r.id === id);
     if (index !== -1) {
-      replies[index] = { id, keyword, reply };
+      replies[index] = { id, keyword, reply, matchType: matchType || 'contains' };
       await writeReplies(replies);
       res.status(200).json(replies[index]);
     } else {

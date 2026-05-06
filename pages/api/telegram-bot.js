@@ -14,6 +14,23 @@ function loadAutoReplies() {
   }
 }
 
+function checkAutoReplyMatch(text, autoReplies) {
+  for (const reply of autoReplies) {
+    if (reply.matchType === 'exact') {
+      // 完全匹配
+      if (text.toLowerCase() === reply.keyword.toLowerCase()) {
+        return reply;
+      }
+    } else if (reply.matchType === 'contains') {
+      // 关键词包含
+      if (text.toLowerCase().includes(reply.keyword.toLowerCase())) {
+        return reply;
+      }
+    }
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).send({
@@ -75,7 +92,7 @@ export default async function handler(req, res) {
   }
   else if (message) {    // 普通用户发来的消息
     const autoReplies = loadAutoReplies();
-    const matchedReply = autoReplies.find(reply => text.toLowerCase().includes(reply.keyword.toLowerCase()));
+    const matchedReply = checkAutoReplyMatch(text, autoReplies);
 
     if (matchedReply) {
       // 自动回复

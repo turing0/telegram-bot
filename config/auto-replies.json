@@ -1,10 +1,14 @@
 [
   {
+    "id": "1",
     "keyword": "hello",
-    "reply": "Hi there! How can I help you?"
+    "reply": "Hi there! How can I help you?",
+    "matchType": "contains"
   },
   {
+    "id": "2",
     "keyword": "help",
-    "reply": "I'm here to assist you. Please describe your issue."
+    "reply": "I'm here to assist you. Please describe your issue.",
+    "matchType": "contains"
   }
 ]
