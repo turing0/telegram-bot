@@ -95,7 +95,7 @@ export default async function handler(req, res) {
 
   const { message } = req.body;
   if (!message) {
-    console.log('Ignored non-message update:', update);
+    console.log('Ignored non-message update:', req.body);
     return res.status(200).send({});
   }
   const text = message.text || message.caption || '';
