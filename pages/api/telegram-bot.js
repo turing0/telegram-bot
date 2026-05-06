@@ -12,8 +12,7 @@ export default async function handler(req, res) {
   const secretToken = req.query.token;
   if (secretToken !== token) {
     console.warn('Received unauthorized request');
-    res.status(401).send({ error: 'Unauthorized' });
-    return;
+    return res.status(401).send({ error: 'Unauthorized' });
   }
 
   const { message } = req.body;
@@ -24,31 +23,44 @@ export default async function handler(req, res) {
     const welcomeMsg =
       `Welcome to <i>NextJS News Channel</i>, <b>${message.from.first_name}</b>.\nTo get a list of commands, send /help`;
     await sendTelegramMessage(message.chat.id, welcomeMsg);
+    return res.status(200).send({});
   }
-  else if (message.reply_to_message) {  // Forward the message
-    const match = message.reply_to_message.text.match(/^Message from user (\d+):/);
+  else if (message.reply_to_message) {  // 管理员回复用户 Forward the message
+    const repliedText =
+        message.reply_to_message.text ||
+        message.reply_to_message.caption ||
+        '';
+    
+    const match = repliedText.match(/^Message from user (\d+):/);
     let chatId = myChatId;
     let msg = 'Message from user ' + message.chat.id + ': ' + escapeHtml(text) + escapeHtml(username);
     if (match) {
-      chatId = parseInt(match[1]);
-      msg = escapeHtml(text);
+      // chatId = parseInt(match[1]);
+      // msg = escapeHtml(text);
+      const targetChatId = match[1];
+      // 管理员回复的是文字
+      if (text) {
+        await sendTelegramMessage(targetChatId, escapeHtml(text));
+      } else {
+        // 管理员回复的是贴纸、图片、语音、文件等
+        await copyTelegramMessage(
+          targetChatId,
+          message.chat.id,
+          message.message_id
+        );
+      }
     }
-    // const replyMessagePromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       chat_id: chatId,
-    //       text: msg,
-    //     }),
-    //   });
-    const replyMessagePromise = sendTelegramMessage(chatId, msg);
-    const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！');
+    // const replyMessagePromise = sendTelegramMessage(chatId, msg);
+    // const okMessagePromise = sendTelegramMessage(message.chat.id, '回复成功！');
+    // await Promise.all([replyMessagePromise, okMessagePromise]);
+    await sendTelegramMessage(message.chat.id, '回复成功！');
 
-    await Promise.all([replyMessagePromise, okMessagePromise]);
     return res.status(200).send({});
   }
-  else if (message && message.text) {
-    const sendMessagePromise = sendTelegramMessage(myChatId, `Message from user ${message.chat.id}: ${message.text}\n@${message.from.username}`);
+  else if (message) {    // 普通用户发来的消息：先发一条说明给管理员
+    // 转发用户原消息给管理员
+    // const sendMessagePromise = sendTelegramMessage(myChatId, `Message from user ${message.chat.id}: ${message.text}\n@${message.from.username}`);
+    const sendMessagePromise = forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     const receivedMessagePromise = sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
 
     await Promise.all([sendMessagePromise, receivedMessagePromise]);
@@ -77,6 +89,32 @@ async function sendTelegramMessage(chatId, text) {
     return data;
   } catch (error) {
     console.error(`Failed to send message to chat ${chatId}: ${error.message}`);
+  }
+}
+
+async function forwardTelegramMessage(chatId, fromChatId, messageId) {
+  const url = `https://api.telegram.org/bot${token}/forwardMessage`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        from_chat_id: fromChatId,
+        message_id: messageId,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      console.error(`Failed to forward message: ${data.description}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`Failed to forward message: ${error.message}`);
   }
 }
 
