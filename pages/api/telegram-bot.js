@@ -15,6 +15,8 @@ const fs = require('fs');
 const path = require('path');
 const configPath = path.join(process.cwd(), 'config', 'auto-replies.json');
 const REPLIES_KEY = 'auto-replies:list';
+const TOPIC_MAP_KEY = 'telegram:user-topic-map';
+const topicMapPath = path.join(process.cwd(), 'config', 'user-topic-map.json');
 
 /**
  * 判断是否在 Vercel 环境
@@ -59,6 +61,55 @@ async function loadAutoReplies() {
   } catch (error) {
     console.error('Failed to load auto replies:', error);
     return [];
+  }
+}
+async function getSavedTopicId(userChatId) {
+  const key = String(userChatId);
+
+  try {
+    if (isVercelEnvironment() && kv) {
+      return await kv.hget(TOPIC_MAP_KEY, key);
+    }
+
+    try {
+      const data = fs.readFileSync(topicMapPath, 'utf8');
+      const map = JSON.parse(data);
+      return map[key] || null;
+    } catch {
+      return null;
+    }
+  } catch (error) {
+    console.error('Failed to get saved topic id:', error);
+    return null;
+  }
+}
+
+async function saveTopicId(userChatId, messageThreadId) {
+  const key = String(userChatId);
+  const value = String(messageThreadId);
+
+  try {
+    if (isVercelEnvironment() && kv) {
+      await kv.hset(TOPIC_MAP_KEY, {
+        [key]: value,
+      });
+      return;
+    }
+
+    let map = {};
+    try {
+      const data = fs.readFileSync(topicMapPath, 'utf8');
+      map = JSON.parse(data);
+    } catch {
+      map = {};
+    }
+
+    map[key] = value;
+
+    fs.mkdirSync(path.dirname(topicMapPath), { recursive: true });
+    fs.writeFileSync(topicMapPath, JSON.stringify(map, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Failed to save topic id:', error);
   }
 }
 
@@ -153,13 +204,8 @@ export default async function handler(req, res) {
     }
 
     // 创建topic（如果配置了 topicGroupChatId，并且用户消息不是来自 topicGroupChatId）
-    console.log(message.chat.id, topicGroupChatId);
     if (topicGroupChatId && String(message.chat.id) !== String(topicGroupChatId)) {
-      const topicTitle = makeTopicTitle(message.from, message.chat.id);
-      const topicResule = await createForumTopic(topicGroupChatId, topicTitle);
-      const topic_thread_id = topicResule?.message_thread_id;
-      console.log('Created forum topic:', topicResule);
-      console.log('topic_thread_id:', topic_thread_id);
+      userTopicId = await getOrCreateUserTopicId(message.chat.id, message.from);
     }
 
     // 转发用户原消息给管理员
@@ -285,6 +331,30 @@ function makeTopicTitle(from, chatId) {
   return title;
 }
 
+async function getOrCreateUserTopicId(userChatId, from) {
+  const savedTopicId = await getSavedTopicId(userChatId);
+
+  if (savedTopicId) {
+    console.log(`Use existing topic for user ${userChatId}:`, savedTopicId);
+    return savedTopicId;
+  }
+
+  const topicTitle = makeTopicTitle(from, userChatId);
+  const topicResult = await createForumTopic(topicGroupChatId, topicTitle);
+
+  if (!topicResult?.message_thread_id) {
+    console.error('Create topic failed or missing message_thread_id:', topicResult);
+    return null;
+  }
+
+  const messageThreadId = topicResult.message_thread_id;
+
+  await saveTopicId(userChatId, messageThreadId);
+
+  console.log(`Created new topic for user ${userChatId}:`, messageThreadId);
+
+  return messageThreadId;
+}
 async function createForumTopic(chatId, name) {
   const url = `https://api.telegram.org/bot${token}/createForumTopic`;
 
