@@ -265,7 +265,7 @@ async function forwardToUserTopicWithRetry(message, userTopicId) {
     message.message_id,
     userTopicId
   );
-
+  console.log('Forward result:', forwardResult);
   if (forwardResult?.ok) {
     return forwardResult;
   }
