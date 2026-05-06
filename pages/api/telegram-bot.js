@@ -26,19 +26,26 @@ export default async function handler(req, res) {
     return res.status(200).send({});
   }
   else if (message.reply_to_message) {  // 管理员回复用户 Forward the message
+    let targetChatId = null;
     const repliedText =
         message.reply_to_message.text ||
         message.reply_to_message.caption ||
         '';
     
+    // 情况 1：管理员回复的是 Message from user xxx: 这条提示消息
     const match = repliedText.match(/^Message from user (\d+):/);
     let chatId = myChatId;
     let msg = 'Message from user ' + message.chat.id + ': ' + escapeHtml(text) + escapeHtml(username);
     if (match) {
       // chatId = parseInt(match[1]);
       // msg = escapeHtml(text);
-      const targetChatId = match[1];
-      // 管理员回复的是文字
+      targetChatId = match[1];
+    }
+    // 情况 2：管理员直接回复被转发过来的消息
+    if (!targetChatId) {
+      targetChatId = getForwardOriginSenderUserId(message.reply_to_message);
+    }
+    if (targetChatId) {
       if (text) {
         await sendTelegramMessage(targetChatId, escapeHtml(text));
       } else {
@@ -57,9 +64,26 @@ export default async function handler(req, res) {
 
     return res.status(200).send({});
   }
-  else if (message) {    // 普通用户发来的消息：先发一条说明给管理员
+  else if (message) {    // 普通用户发来的消息
+    const forwardedMessage = forwardResult?.result;
+    const originUserId = getForwardOriginSenderUserId(forwardedMessage);
+    const originalChatId = String(message.chat.id);
+    const originMatchesOriginalUser = originUserId === originalChatId;
+    // 如果 forward_origin.sender_user.id 没有，或者和原 chat.id 不一致，才补发 Message from user
+    if (!originMatchesOriginalUser) {
+      const header =
+        `Message from user ${message.chat.id}:\n` +
+        `Name: ${escapeHtml(fromName)}\n` +
+        `Username: ${escapeHtml(username)}\n\n` +
+        `请回复这条消息来回复用户。`;
+
+      await sendTelegramMessage(
+        myChatId,
+        header,
+        forwardedMessage?.message_id
+      );
+    }
     // 转发用户原消息给管理员
-    // const sendMessagePromise = sendTelegramMessage(myChatId, `Message from user ${message.chat.id}: ${message.text}\n@${message.from.username}`);
     const sendMessagePromise = forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     const receivedMessagePromise = sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
 
@@ -125,6 +149,16 @@ function escapeHtml(str = '') {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+function getForwardOriginSenderUserId(message) {
+  const origin = message?.forward_origin;
+
+  if (origin?.type === 'user' && origin.sender_user?.id) {
+    return String(origin.sender_user.id);
+  }
+
+  return null;
 }
 
 // export default async (req, res) => {
