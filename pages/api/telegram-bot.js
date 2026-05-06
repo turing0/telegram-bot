@@ -153,6 +153,7 @@ export default async function handler(req, res) {
     }
 
     // 创建topic（如果配置了 topicGroupChatId，并且用户消息不是来自 topicGroupChatId）
+    console.log(message.chat.id, topicGroupChatId);
     if (topicGroupChatId && String(message.chat.id) !== String(topicGroupChatId)) {
       const topicTitle = makeTopicTitle(message.from, message.chat.id);
       const topicResule = await createForumTopic(topicGroupChatId, topicTitle);
