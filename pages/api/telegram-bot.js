@@ -17,6 +17,8 @@ const configPath = path.join(process.cwd(), 'config', 'auto-replies.json');
 const REPLIES_KEY = 'auto-replies:list';
 const TOPIC_MAP_KEY = 'telegram:user-topic-map';
 const topicMapPath = path.join(process.cwd(), 'config', 'user-topic-map.json');
+const TOPIC_TITLE_MAP_KEY = 'telegram:topic-title-map';
+const topicTitleMapPath = path.join(process.cwd(), 'config', 'topic-title-map.json');
 
 /**
  * 判断是否在 Vercel 环境
@@ -152,6 +154,8 @@ export default async function handler(req, res) {
   const text = message.text || message.caption || '';
   const username = message.from?.username ? `@${message.from.username}` : '无username';
   const isAdminChat = String(message.chat.id) === String(myChatId);
+  const isTopicGroupChat =
+  topicGroupChatId && String(message.chat.id) === String(topicGroupChatId);
 
   if (message.text === '/start') {   
     const welcomeMsg =
@@ -191,6 +195,10 @@ export default async function handler(req, res) {
     }
     // await sendTelegramMessage(message.chat.id, '回复成功！');
 
+    return res.status(200).send({});
+  }
+  else if (isTopicGroupChat)  {
+    await handleTopicGroupAdminMessage(message);
     return res.status(200).send({});
   }
   else if (message) {    // 普通用户发来的消息
@@ -331,6 +339,78 @@ async function copyTelegramMessage(chatId, fromChatId, messageId) {
   }
 }
 
+async function isTelegramChatAdmin(chatId, userId) {
+  const url = `https://api.telegram.org/bot${token}/getChatMember`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        user_id: userId,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      console.error(`Failed to get chat member: ${data.description}`);
+      return false;
+    }
+
+    const status = data.result?.status;
+
+    return status === 'creator' || status === 'administrator';
+  } catch (error) {
+    console.error(`Failed to check chat admin: ${error.message}`);
+    return false;
+  }
+}
+async function handleTopicGroupAdminMessage(message) {
+  const messageThreadId = message.message_thread_id;
+
+  if (!messageThreadId) {
+    console.log('Ignored message in topic group general area');
+    return;
+  }
+
+  const fromUserId = message.from?.id;
+
+  if (!fromUserId) {
+    console.log('Ignored topic group message without from user id');
+    return;
+  }
+
+  // const isAdmin = await isTelegramChatAdmin(message.chat.id, fromUserId);
+  const isAdmin = fromUserId===myChatId; // 只允许管理员账号发消息
+
+  if (!isAdmin) {
+    // console.log('Ignored non-admin message in topic group:', fromUserId);
+    return;
+  }
+
+  const targetChatId = await getUserChatIdMessageThreadId(messageThreadId);
+
+  if (!targetChatId) {
+    console.warn('No target user found for topic:', messageThreadId);
+    return;
+  }
+
+  // 管理员发纯文本
+  if (message.text) {
+    await sendTelegramMessage(targetChatId, escapeHtml(message.text));
+    return;
+  }
+
+  // 管理员发图片、语音、文件、贴纸、带 caption 的图片等
+  await copyTelegramMessage(
+    targetChatId,
+    message.chat.id,
+    message.message_id
+  );
+}
+
 function makeTopicTitle(from, chatId) {
   const nickname = from?.first_name || '无昵称';
   const username = from?.username ? `@${from.username}` : '无username';
@@ -361,6 +441,7 @@ async function getOrCreateUserTopicId(userChatId, from) {
   const messageThreadId = topicResult.message_thread_id;
 
   await saveTopicId(userChatId, messageThreadId);
+  await saveUserChatId(messageThreadId, userChatId);
   // console.log(`Created new topic for user ${userChatId}:`, messageThreadId);
 
   return messageThreadId;
@@ -387,6 +468,54 @@ async function createForumTopic(chatId, name) {
     return data.result;
   } catch (error) {
     console.error(`Failed to create forum topic: ${error.message}`);
+    return null;
+  }
+}
+async function saveUserChatId(messageThreadId, userChatId) {
+  const key = String(messageThreadId);
+  const value = String(userChatId);
+
+  try {
+    if (isVercelEnvironment() && kv) {
+      await kv.hset(TOPIC_TITLE_MAP_KEY, {
+        [key]: value,
+      });
+      return;
+    }
+
+    let map = {};
+    try {
+      const data = fs.readFileSync(topicTitleMapPath, 'utf8');
+      map = JSON.parse(data);
+    } catch {
+      map = {};
+    }
+
+    map[key] = value;
+
+    fs.mkdirSync(path.dirname(topicTitleMapPath), { recursive: true });
+    fs.writeFileSync(topicTitleMapPath, JSON.stringify(map, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Failed to save user chat ID:', error);
+  }
+}
+async function getUserChatIdMessageThreadId(messageThreadId) {
+  const key = String(messageThreadId);
+
+  try {
+    if (isVercelEnvironment() && kv) {
+      return await kv.hget(TOPIC_TITLE_MAP_KEY, key);
+    }
+
+    try {
+      const data = fs.readFileSync(topicTitleMapPath, 'utf8');
+      const map = JSON.parse(data);
+      return map[key] || null;
+    } catch {
+      return null;
+    }
+  } catch (error) {
+    console.error('Failed to get topic title:', error);
     return null;
   }
 }
