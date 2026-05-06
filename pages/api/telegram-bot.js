@@ -156,6 +156,7 @@ export default async function handler(req, res) {
   const isAdminChat = String(message.chat.id) === String(myChatId);
   const isTopicGroupChat =
   topicGroupChatId && String(message.chat.id) === String(topicGroupChatId);
+  console.log(isTopicGroupChat, message.chat.id, topicGroupChatId)
 
   if (message.text === '/start') {   
     const welcomeMsg =
