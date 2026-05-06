@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   const { message } = req.body;
   const text = message.text || message.caption || '';
-  const username = message.from?.username ? `@${message.from.username}` : '无用户名';
+  const username = message.from?.username ? `@${message.from.username}` : '无username';
 
   if (message.text === '/start') {   
     const welcomeMsg =
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
   }
   else if (message) {    // 普通用户发来的消息
     // 转发用户原消息给管理员
-    const forwardResult = forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
+    const forwardResult = await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     
     const forwardedMessage = forwardResult?.result;
     const originUserId = getForwardOriginSenderUserId(forwardedMessage);
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
     if (!originMatchesOriginalUser) {
       const header =
         `Message from user ${message.chat.id}:\n` +
-        `Name: ${escapeHtml(fromName)}\n` +
+        `Name: ${escapeHtml(message.from?.first_name)}\n` +
         `Username: ${escapeHtml(username)}\n\n` +
         `请回复这条消息来回复用户。`;
 
@@ -88,7 +88,7 @@ export default async function handler(req, res) {
     }
     
     await sendTelegramMessage(message.chat.id, '已收到您的消息，我们将尽快回复您！');
-    
+
     return res.status(200).send({});
   } else {
     res.status(200).send({});
@@ -96,7 +96,6 @@ export default async function handler(req, res) {
 
   // Respond to the webhook request
   res.status(200).send({});
-
 }
 
 async function sendTelegramMessage(chatId, text) {
