@@ -211,7 +211,7 @@ export default async function handler(req, res) {
 
     // 转发用户原消息
     if (userTopicId) {
-      await forwardTelegramMessage(`${topicGroupChatId}_${userTopicId}`, message.chat.id, message.message_id);
+      await forwardTelegramMessage(topicGroupChatId, message.chat.id, message.message_id, userTopicId);
     } else {
       await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     }
@@ -275,18 +275,22 @@ async function sendTelegramMessage(chatId, text, replyToMessageId = null) {
   }
 }
 
-async function forwardTelegramMessage(chatId, fromChatId, messageId) {
+async function forwardTelegramMessage(chatId, fromChatId, messageId, messageThreadId = null) {
   const url = `https://api.telegram.org/bot${token}/forwardMessage`;
+  const body = {
+    chat_id: chatId,
+    from_chat_id: fromChatId,
+    message_id: messageId,
+  };
+  if (messageThreadId) {
+    body.message_thread_id = Number(messageThreadId);
+  }
 
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        from_chat_id: fromChatId,
-        message_id: messageId,
-      }),
+      body: JSON.stringify(body),
     });
 
     const data = await response.json();
