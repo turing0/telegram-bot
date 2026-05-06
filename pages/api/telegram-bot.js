@@ -471,7 +471,7 @@ async function handleTopicGroupAdminMessage(message) {
   }
 
   const targetChatId = await getUserChatIdMessageThreadId(messageThreadId);
-  console.log('Admin message in topic group, thread id:', messageThreadId, 'target chat id:', targetChatId);
+  // console.log('Admin message in topic group, thread id:', messageThreadId, 'target chat id:', targetChatId);
   if (!targetChatId) {
     console.warn('No target user found for topic:', messageThreadId);
     return;
