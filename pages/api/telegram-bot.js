@@ -1,5 +1,18 @@
 const myChatId = process.env.MY_CHAT_ID;
 const token = process.env.TELEGRAM_BOT_TOKEN;
+const fs = require('fs');
+const path = require('path');
+
+const configPath = path.join(process.cwd(), 'config', 'auto-replies.json');
+
+function loadAutoReplies() {
+  try {
+    const data = fs.readFileSync(configPath, 'utf8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -61,6 +74,15 @@ export default async function handler(req, res) {
     return res.status(200).send({});
   }
   else if (message) {    // 普通用户发来的消息
+    const autoReplies = loadAutoReplies();
+    const matchedReply = autoReplies.find(reply => text.toLowerCase().includes(reply.keyword.toLowerCase()));
+
+    if (matchedReply) {
+      // 自动回复
+      await sendTelegramMessage(message.chat.id, matchedReply.reply);
+      return res.status(200).send({});
+    }
+
     // 转发用户原消息给管理员
     const forwardResult = await forwardTelegramMessage(myChatId, message.chat.id, message.message_id);
     

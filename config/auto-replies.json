@@ -1,0 +1,10 @@
+[
+  {
+    "keyword": "hello",
+    "reply": "Hi there! How can I help you?"
+  },
+  {
+    "keyword": "help",
+    "reply": "I'm here to assist you. Please describe your issue."
+  }
+]
