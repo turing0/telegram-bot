@@ -95,7 +95,7 @@ export default async function handler(req, res) {
 
   const { message } = req.body;
   if (!message) {
-    console.log('Ignored non-message update:', req.body);
+    // console.log('Ignored non-message update:', req.body);
     return res.status(200).send({});
   }
   const text = message.text || message.caption || '';
@@ -155,7 +155,7 @@ export default async function handler(req, res) {
     // 创建topic（如果配置了 topicGroupChatId，并且用户消息不是来自 topicGroupChatId）
     if (topicGroupChatId && String(message.chat.id) !== String(topicGroupChatId)) {
       const topicTitle = makeTopicTitle(message.from, message.chat.id);
-      topicResule = await createForumTopic(topicGroupChatId, topicTitle);
+      const topicResule = await createForumTopic(topicGroupChatId, topicTitle);
       console.log('Created forum topic:', topicResule);
     }
 
