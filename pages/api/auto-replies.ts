@@ -112,9 +112,15 @@ export default async function handler(req: any, res: any) {
       res.status(404).json({ error: 'Not found' });
     }
   } else if (req.method === 'DELETE') {
-    const { id } = req.body;
+    const { id } = req.body || {};
+    const replyId = id || req.query?.id;
+
+    if (!replyId) {
+      return res.status(400).json({ error: 'Missing id' });
+    }
+
     const replies = await readReplies();
-    const filtered = replies.filter(r => r.id !== id);
+    const filtered = replies.filter(r => r.id !== replyId);
     await writeReplies(filtered);
     res.status(200).json({ success: true });
   } else {

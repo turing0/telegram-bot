@@ -222,14 +222,16 @@ export default function Config({ authenticated, passwordConfigured }: ConfigProp
 
     setLoading(true);
     try {
-      const res = await fetch('/api/auto-replies', {
+      const res = await fetch(`/api/auto-replies?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
       });
 
       if (res.ok) {
         await fetchReplies();
+      } else {
+        console.error('Failed to delete reply:', await res.text());
+        alert('删除回复失败');
       }
     } catch (error) {
       console.error('Failed to delete reply:', error);
