@@ -71,11 +71,11 @@ export default async function handler(req, res) {
     const originUserId = getForwardOriginSenderUserId(forwardedMessage);
     const originalChatId = String(message.chat.id);
     const originMatchesOriginalUser = originUserId === originalChatId;
-    // 如果 forward_origin.sender_user.id 没有，或者和原 chat.id 不一致，才补发 Message from user
+    // 如果 forward_origin.sender_user.id 没有，或者和原 chat.id 不一致，才补发消息来源
     if (!originMatchesOriginalUser) {
       const header =
-        `Message from user ${message.chat.id}:\n` +
-        `${escapeHtml(username)}\n\n` +
+        `Message from user ${message.chat.id}:↑\n` +
+        `${escapeHtml(username)}\n` +
         `请回复这条消息来回复用户。`;
 
       await sendTelegramMessage(
@@ -195,12 +195,6 @@ function getForwardOriginSenderUserId(message) {
 
 // // This informs the Telegram servers of the new webhook.
 // // bot.setWebHook(`${process.env.URL}/bot${token}`);
-
-// // Matches "/echo [whatever]"
-// bot.onText(/\/echo (.+)/, (msg, match) => {
-//   // 'msg' is the received Message from Telegram
-//   // 'match' is the result of executing the regexp above on the text content
-//   // of the message
 
 //   const chatId = msg.chat.id;
 //   const resp = match[1]; // the captured "whatever"
